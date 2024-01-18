@@ -20,5 +20,6 @@ char *uint64_to_str_hex(uint64_t num, int flag, int width);
 char *uint32_to_str_oct(uint32_t num, int flag, int width);
 char *insert_str(char *buf, const char *str);
 int vsprintf(char *buf, const char *fmt, va_list args);
+int sprintf(char *buf, const char *fmt, ...);
 
 #endif

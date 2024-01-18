@@ -6,10 +6,10 @@
 static isr_t interrupt_handlers[256];
 idt_entry_t idt_entries[256]; // IDT有256个描述符
 idt_ptr_t idt_ptr;
+
 extern void idt_flush(uint32_t);
 
-static void idt_set_gate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags)
-{
+static void idt_set_gate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags) {
     idt_entries[num].base_low = base & 0xFFFF;
     idt_entries[num].base_high = (base >> 16) & 0xFFFF; // 拆成低位和高位
 
@@ -20,7 +20,7 @@ static void idt_set_gate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags
 }
 
 void isr_handler(registers_t regs) {
-    vga_writestring("[Kernel]: received interrupt: ");
+    vga_writestring("\n[Kernel]: received interrupt: ");
     vga_write_dec(regs.int_no);
     vga_putchar('\n');
 
@@ -44,7 +44,7 @@ void register_interrupt_handler(uint8_t n, isr_t handler) {
     interrupt_handlers[n] = handler;
 }
 
-void install_idt(){
+void install_idt() {
     idt_ptr.limit = sizeof(idt_entry_t) * 256 - 1;
     idt_ptr.base = (uint32_t) &idt_entries;
 
@@ -114,4 +114,19 @@ void install_idt(){
     REGISTER_IRQ(47, 15);
 #undef REGISTER_IRQ
     idt_flush((uint32_t) &idt_ptr);
+}
+
+void int_13(registers_t *reg) {
+    io_cli();
+    printf("ERROR: CPOS has #GP exception.\n");
+    printf("Registers: [ERROR_CODE]: %x\n     "
+           " eax:0x%x ebx:0x%x ecx:0x%x eflags:%x edi:0x%x edx: 0x%x\n"
+           "      eip:0x%x esi:0x%x esp:0x%x ebp:0x%x ebx:0x%x\n", reg->err_code, reg->eax, reg->ebx, reg->ecx,
+           reg->eflags, reg->edi, reg->edx,
+           reg->eip, reg->esi, reg->esp, reg->ebp, reg->ebx);
+    for (;;)io_hlt();
+}
+
+void setup_error() {
+    register_interrupt_handler(13, int_13);
 }

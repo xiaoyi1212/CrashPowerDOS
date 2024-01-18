@@ -6,6 +6,10 @@
 
 #define EFLAGES_DEFAULT ( 1 << 1 )
 #define EFLAGES_IF (1 << 9)
+#define MAX_TASKS 1000
+#define TASK_GDT0 3
+
+#define MAX_FILES_OPEN_PER_PROC 8
 
 /*
         通用寄存器(EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI)
@@ -16,46 +20,47 @@
 */
 
 struct tss_entry {
-    uint32_t link;
-    uint32_t esp0;
-    uint32_t ss0;
-    uint32_t esp1;
-    uint32_t ss1;
-    uint32_t esp2;
-    uint32_t ss2;
-    uint32_t cr3;
-    uint32_t eip;
-    uint32_t eflags;
-    uint32_t eax;
-    uint32_t ecx;
-    uint32_t edx;
-    uint32_t ebx;
-    uint32_t esp;
-    uint32_t ebp;
-    uint32_t esi;
-    uint32_t edi;
-    uint32_t es;
-    uint32_t cs;
-    uint32_t ss;
-    uint32_t ds;
-    uint32_t fs;
-    uint32_t gs;
-    uint32_t ldtr;
-    uint16_t padding1;
-    uint16_t iopb_off;
+    int backlink, esp0, ss0, esp1, ss1, esp2, ss2, cr3;
+    int eip, eflags, eax, ecx, edx, ebx, esp, ebp, esi, edi;
+    int es, cs, ss, ds, fs, gs;
+    int ldtr, iomap;
 } __attribute__ ((packed));
+
+typedef struct {
+    uint32_t eax, ebx, ecx, edx, esi, edi, ebp, esp, eip, eflags;
+} RegisterState;
+
+typedef enum {
+    NEW,
+    READY,
+    RUNNING,
+    WAITING,
+    TERMINATED
+} ProcessStatus;
 
 typedef struct task
 {
     struct tss_entry tss;
     uint32_t pid;
-    char* stack; //内核堆栈
+    int sel, flags;
+    int fd_table[MAX_FILES_OPEN_PER_PROC];
     char* task_name;
-    page_directory_t *pgd; //进程页目录
+    ProcessStatus status;
 }task_t;
 
+typedef struct TASKCTL {
+    int running, now;
+    task_t *tasks[MAX_TASKS];
+    task_t tasks0[MAX_TASKS];
+} taskctl_t;
+
 void tss_install();
-void tss_set(uint16_t ss0, uint32_t esp0);
+void task_switch(registers_t *reg);
+void task_run(task_t *task);
+task_t *task_alloc();
+task_t *task_init();
+void task_exit(task_t *task);
+task_t *task_now();
 void init_task();
 
 #endif

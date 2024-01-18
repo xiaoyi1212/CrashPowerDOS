@@ -58,6 +58,7 @@ void *memset(void *s, int c, size_t n);
 void switch_page_directory(page_directory_t *new);
 page_t *get_page(uint32_t address,int make,page_directory_t *dir);
 void alloc_frame(page_t *page,int is_kernel,int is_writable);
+uint32_t first_frame();
 void page_fault(registers_t *regs);
 void flush_tlb();
 

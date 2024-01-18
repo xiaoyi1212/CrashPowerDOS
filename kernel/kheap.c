@@ -1,7 +1,7 @@
 #include "../include/memory.h"
 
 header_t *head = NULL, *tail = NULL; // 内存块链表
-extern page_directory_t *kernel_directory;
+extern page_directory_t *current_directory;
 extern uint32_t end; // declared in linker.ld
 static uint32_t placement_address = (uint32_t) &end;
 void *program_break, *program_break_end;
@@ -12,7 +12,7 @@ static uint32_t kmalloc_int(uint32_t sz, uint32_t align, uint32_t *phys) {
         void *addr = alloc(sz); // 直接malloc，align丢掉了
         if (phys) {
             // 需要物理地址，先找到对应页
-            page_t *page = get_page((uint32_t) addr, 0, kernel_directory);
+            page_t *page = get_page((uint32_t) addr, 0, current_directory);
             *phys = page->frame * 0x1000 + ((uint32_t) addr & 0xfff);
         }
         return (uint32_t) addr;

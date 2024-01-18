@@ -90,7 +90,7 @@ struct idt_ptr_struct {
 
 typedef struct idt_ptr_struct idt_ptr_t;
 
-#define NGDT 256 
+#define NGDT 4096
 
 #define AC_AC 0x1       // 可访问 access
 #define AC_RW 0x2       // [代码]可读；[数据]可写 readable for code selector & writeable for data selector
@@ -153,5 +153,5 @@ void intr_handle(uint8_t vec_nr);
 void gdt_set_gate(uint8_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t flags);
 void install_gdt();
 void install_idt();
-
+void setup_error();
 #endif

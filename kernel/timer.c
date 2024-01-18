@@ -1,13 +1,11 @@
 #include "../include/timer.h"
 #include "../include/io.h"
 #include "../include/isr.h"
-#include "../include/task.h"
 
 uint32_t tick = 0;
 
 static void timer_handle(registers_t *regs){
     tick++;
-   
 }
 
 void init_timer(uint32_t timer)

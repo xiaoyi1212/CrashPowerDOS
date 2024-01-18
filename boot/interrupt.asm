@@ -62,9 +62,7 @@ isr_common_stub:
     mov es, ax
     mov fs, ax
     mov gs, ax
-
     call isr_handler ; 调用C语言处理函数
-
     pop eax ; 恢复各段
     mov ds, ax
     mov es, ax

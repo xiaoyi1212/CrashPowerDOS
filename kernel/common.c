@@ -4,6 +4,16 @@
 
 static char num_str_buf[BUF_SIZE];
 
+int sprintf(char *buf, const char *fmt, ...)
+{
+    va_list args;
+    int retval;
+    va_start(args, fmt);
+    retval = vsprintf(buf, fmt, args);
+    va_end(args);
+    return retval;
+}
+
 size_t strlen(const char *str)
 {
     size_t len = 0;
