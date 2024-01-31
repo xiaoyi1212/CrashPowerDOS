@@ -2,8 +2,59 @@
 #include "../include/memory.h"
 #include "../include/io.h"
 #include "../include/common.h"
+#include "../include/vga.h"
 
-static uint8_t read_cmos(uint8_t p) {
+static void cpuid(unsigned int op, unsigned int *eax, unsigned int *ebx, unsigned int *ecx, unsigned int *edx) {
+    *eax = op;
+    *ecx = 0;
+    asm volatile("cpuid"
+            : "=a" (*eax),                //输出参数
+    "=b" (*ebx),
+    "=c" (*ecx),
+    "=d" (*edx)
+            : "0" (*eax), "2" (*ecx)    //输入参数
+            : "memory");
+}
+
+static void get_vendor_name(cpu_t *c) {
+    int cpuid_level;
+    char x86_vendor_id[16] = {0};
+    cpuid(0x00000000, (unsigned int *) &cpuid_level,
+          (unsigned int *) &x86_vendor_id[0],
+          (unsigned int *) &x86_vendor_id[8],
+          (unsigned int *) &x86_vendor_id[4]);
+    c->vendor = x86_vendor_id;
+}
+
+static void get_model_name(cpu_t *c) {
+    unsigned int *v = (unsigned int *) c->model_name;
+    cpuid(0x80000002, &v[0], &v[1], &v[2], &v[3]);
+    cpuid(0x80000003, &v[4], &v[5], &v[6], &v[7]);
+    cpuid(0x80000004, &v[8], &v[9], &v[10], &v[11]);
+    c->model_name[48] = 0;
+}
+
+static void get_cpu_address_sizes(cpu_t *c) {
+    unsigned int eax, ebx, ecx, edx;
+    cpuid(0x80000008, &eax, &ebx, &ecx, &edx);
+
+    c->virt_bits = (eax >> 8) & 0xff;
+    c->phys_bits = eax & 0xff;
+}
+
+void print_cpu_id() {
+    cpu_t *c = (cpu_t *) kmalloc(sizeof(cpu_t));
+    get_vendor_name(c);
+    get_model_name(c);
+    get_cpu_address_sizes(c);
+    printf("CPU Vendor:            %s\n", c->vendor);
+    printf("CPU Name:   %s\n", c->model_name);
+    printf("CPU Cache:             %d\n",c->phys_bits);
+    printf("CPU Virtual Address:   0x%x\n",c->virt_bits);
+    kfree(c);
+}
+
+uint8_t read_cmos(uint8_t p) {
     uint8_t data;
     outb(CMOS_INDEX, p);
     data = inb(CMOS_DATA);
@@ -15,7 +66,7 @@ static uint32_t get_hour() {
     return bcd2hex(read_cmos(CMOS_CUR_HOUR));
 }
 
-static uint32_t get_min() {
+;static uint32_t get_min() {
     return bcd2hex(read_cmos(CMOS_CUR_MIN));
 }
 

@@ -7,6 +7,7 @@
 #include "../include/keyboard.h"
 #include "../include/timer.h"
 #include "../include/task.h"
+#include "../include/cmos.h"
 
 extern uint32_t end;
 uint32_t placement_address = (uint32_t) &end;
@@ -43,6 +44,8 @@ void kernel_main(void *multiboot_structure, unsigned int magicnumber) {
     //init_task();
 
     asm("sti");
+
+    print_cpu_id();
 
     setup_shell();
 

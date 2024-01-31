@@ -153,7 +153,8 @@ void cmd_del(int argc, char **argv) {
 }
 
 void cmd_date(){
-    printf("System Time: %s\n",get_date_time());
+    printf("System Time:           %s\n",get_date_time());
+    print_cpu_id();
 }
 
 void setup_shell() {
@@ -183,7 +184,7 @@ void setup_shell() {
             vga_clear();
         else if (!strcmp("ls", argv[0]))
             cmd_ls();
-        else if (!strcmp("date", argv[0]))
+        else if (!strcmp("sysinfo", argv[0]))
             cmd_date();
         else if (!strcmp("cat", argv[0]))
             cmd_cat(argc, argv);
@@ -203,7 +204,7 @@ void setup_shell() {
             vga_writestring("read       <name>  Read a file\n");
             vga_writestring("mkdir      <name>  Make a directory\n");
             vga_writestring("del rm     <name>  Delete a file\n");
-            vga_writestring("date               Print system date time.\n");
+            vga_writestring("sysinfo            Print system info.\n");
         } else printf("[Shell]: Unknown command '%s'.\n", argv[0]);
     }
 }

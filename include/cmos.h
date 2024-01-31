@@ -1,6 +1,8 @@
 #ifndef CPOS_CMOS_H
 #define CPOS_CMOS_H
 
+#include <stdint.h>
+
 #define NEED_UTC_8
 
 #define CMOS_INDEX 0x70
@@ -17,6 +19,15 @@
 
 #define bcd2hex(n) ((n >> 4) * 10) + (n & 0xf)
 
+typedef struct {
+    char* vendor;
+    char model_name[64];
+    unsigned int virt_bits;
+    unsigned int phys_bits;
+}cpu_t;
+
+uint8_t read_cmos(uint8_t p);
 char *get_date_time();
+void print_cpu_id();
 
 #endif
