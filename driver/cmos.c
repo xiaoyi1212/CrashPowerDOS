@@ -48,7 +48,7 @@ void print_cpu_id() {
     get_model_name(c);
     get_cpu_address_sizes(c);
     printf("CPU Vendor:            %s\n", c->vendor);
-    printf("CPU Name:   %s\n", c->model_name);
+    printf("CPU Name:              %s\n", c->model_name);
     printf("CPU Cache:             %d\n",c->phys_bits);
     printf("CPU Virtual Address:   0x%x\n",c->virt_bits);
     kfree(c);

@@ -8,6 +8,7 @@
 #include "../include/timer.h"
 #include "../include/task.h"
 #include "../include/cmos.h"
+#include "../include/acpi.h"
 
 extern uint32_t end;
 uint32_t placement_address = (uint32_t) &end;
@@ -39,13 +40,15 @@ void kernel_main(void *multiboot_structure, unsigned int magicnumber) {
     vga_writestring("[Kernel]: Memory page init success!\n");
     init_keyboard();
     vga_writestring("[Driver]: Keyboard Load success!\n");
+    //acpi_install();
+    vga_writestring("[Kernel]: ACPItable load success! \n");
 
     init_timer(50);
-    //init_task();
-
-    asm("sti");
-
+    init_task();
     print_cpu_id();
+
+    task_t* shell = create_task("CPOS-Shell",setup_shell);
+    //task_run(shell);
 
     setup_shell();
 

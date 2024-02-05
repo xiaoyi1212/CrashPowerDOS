@@ -15,5 +15,7 @@ void cmd_cat(int argc,char **argv);
 void cmd_read(int argc,char **argv);
 void cmd_mkdir(int argc,char **argv);
 void cmd_del(int argc,char **argv);
+void cmd_date();
+void cmd_proc();
 
 #endif

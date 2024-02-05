@@ -1,4 +1,5 @@
 #include "../include/memory.h"
+#include "vga.h"
 
 void *memcpy(void *dst_, const void *src_, uint32_t size) {
     uint8_t *dst = dst_;

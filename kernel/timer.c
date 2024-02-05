@@ -1,11 +1,16 @@
 #include "../include/timer.h"
 #include "../include/io.h"
 #include "../include/isr.h"
+#include "../include/task.h"
+#include "../include/vga.h"
 
 uint32_t tick = 0;
 
 static void timer_handle(registers_t *regs){
+    io_cli();
     tick++;
+    task_switch(regs);
+    io_sti();
 }
 
 void init_timer(uint32_t timer)

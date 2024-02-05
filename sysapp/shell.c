@@ -8,6 +8,7 @@
 #include "../include/fat16.h"
 #include "../include/memory.h"
 #include "../include/config.h"
+#include "../include/task.h"
 
 extern Queue *key_char_queue;
 
@@ -157,6 +158,20 @@ void cmd_date(){
     print_cpu_id();
 }
 
+void cmd_proc(){
+    printf("====--------[Processes]---------===\n");
+
+    int index = 0;
+    taskctl_t *pcb_m = get_manager();
+    for(int i = 0;i<MAX_TASKS;i++){
+        task_t *pcb = pcb_m->tasks[i];
+        if(pcb == NULL) continue;
+        index++;
+        printf("%s    %d      %s.\n",pcb->task_name,pcb->pid,pcb->status == RUNNING ? "Running" : "Sleep");
+    }
+    printf("Name          Pid     Status [All Proc: %d]\n\n",index);
+}
+
 void setup_shell() {
     vga_clear();
     printf("CrashPowerDOS for x86 [Version %s] \n", VERSION);
@@ -186,6 +201,8 @@ void setup_shell() {
             cmd_ls();
         else if (!strcmp("sysinfo", argv[0]))
             cmd_date();
+        else if (!strcmp("proc", argv[0]))
+            cmd_proc();
         else if (!strcmp("cat", argv[0]))
             cmd_cat(argc, argv);
         else if (!strcmp("read", argv[0]))
@@ -205,6 +222,7 @@ void setup_shell() {
             vga_writestring("mkdir      <name>  Make a directory\n");
             vga_writestring("del rm     <name>  Delete a file\n");
             vga_writestring("sysinfo            Print system info.\n");
+            vga_writestring("proc               Lists all running processes.\n");
         } else printf("[Shell]: Unknown command '%s'.\n", argv[0]);
     }
 }

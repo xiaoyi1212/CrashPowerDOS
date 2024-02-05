@@ -1,10 +1,8 @@
 #include "../include/task.h"
 #include "../include/memory.h"
-#include "../include/config.h"
-#include "../include/vga.h"
 #include "../include/io.h"
+#include "../include/vga.h"
 #include "../include/description_table.h"
-#include "../include/shell.h"
 
 taskctl_t *taskctl;
 
@@ -17,34 +15,29 @@ task_t *kernel_task;
 struct tss_entry tss_e;
 uint32_t pid_index, task_index;
 
-void tss_install() {
-    asm volatile("ltr %%ax" : : "a"((TASK_GDT0 << 3)));
-}
-
-task_t *task_init() //内核构建进程
+task_t *task_init() //0号系统进程初始化
 {
     int i;
     task_t *task;
     taskctl = (taskctl_t *) kmalloc(sizeof(taskctl_t));
 
-
-
-    for (i = 0; i < 200; i++) {
+    /*
+    for (i = 0; i < MAX_TASKS; i++) {
         taskctl->tasks0[i].flags = 0;
         taskctl->tasks0[i].sel = (TASK_GDT0 + i) * 8;
-        gdt_set_gate(TASK_GDT0 + i, (uint32_t) &taskctl->tasks0[i].tss, 103, 0xE9, 0x00);
-        printf("Index: %d\n",i);
+        taskctl->tasks0[i].tss.ldtr = (TASK_GDT0 + MAX_TASKS + i) * 8;
     }
-
+     */
 
     task = task_alloc();
     task->flags = 2;
+    task->pid = pid_index++;
+    task->task_name = "CPOS-System";
+    task->status = RUNNING;
+
     taskctl->running = 1;
     taskctl->now = 0;
     taskctl->tasks[0] = task;
-
-    printf("??");
-    while (1);
 
     load_tr(task->sel);
     return task;
@@ -66,7 +59,7 @@ task_t *task_alloc() {
         if (taskctl->tasks0[i].flags == 0) {
             task = &taskctl->tasks0[i];
             task->flags = 1;
-            task->tss.eflags = 0x00000202;
+            task->tss.eflags = 0x1202;
             task->tss.eax = task->tss.ecx = task->tss.edx = task->tss.ebx = 0;
             task->tss.ebp = task->tss.esi = task->tss.edi = 0;
             task->tss.es = task->tss.ds = task->tss.fs = task->tss.gs = 0;
@@ -88,11 +81,23 @@ task_t *task_alloc() {
     return 0;
 }
 
+task_t *create_task(char* name,void* func){
+    task_t *proc = task_alloc();
+    proc->task_name = name;
+    proc->pid = pid_index++;
+
+    proc->tss.esp = (uint32_t) kmalloc(64 * 1024) + 64 * 1024 - 4;
+    proc->tss.eip = (int) &func;
+    proc->tss.es = proc->tss.ss = proc->tss.ds = proc->tss.fs = proc->tss.gs = 2 * 8;
+    proc->tss.cs = 1 * 8;
+
+    return proc;
+}
+
 void task_run(task_t *task) {
     task->flags = 2;
     taskctl->tasks[taskctl->running] = task;
     taskctl->running++;
-    return;
 }
 
 task_t *task_now() {
@@ -133,15 +138,13 @@ void task_exit(task_t *task) {
     }
 }
 
+taskctl_t *get_manager(){
+    return taskctl;
+}
+
 void init_task() {
     io_cli();
-
-
     kernel_task = task_init();
     curror_task = kernel_task;
-    //tss_install();
-
     io_sti();
-
-    setup_shell();
 }

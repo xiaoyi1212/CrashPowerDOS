@@ -38,7 +38,7 @@ typedef enum {
     TERMINATED
 } ProcessStatus;
 
-typedef struct task
+typedef struct task //进程控制块PCB
 {
     struct tss_entry tss;
     uint32_t pid;
@@ -54,13 +54,14 @@ typedef struct TASKCTL {
     task_t tasks0[MAX_TASKS];
 } taskctl_t;
 
-void tss_install();
 void task_switch(registers_t *reg);
 void task_run(task_t *task);
 task_t *task_alloc();
 task_t *task_init();
 void task_exit(task_t *task);
 task_t *task_now();
+taskctl_t *get_manager();
 void init_task();
+task_t *create_task(char* name,void* func);
 
 #endif
