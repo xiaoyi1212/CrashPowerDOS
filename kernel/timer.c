@@ -6,16 +6,15 @@
 
 uint32_t tick = 0;
 
-static void timer_handle(registers_t *regs){
+static void timer_handle(registers_t *regs) {
     io_cli();
     tick++;
     task_switch(regs);
     io_sti();
 }
 
-void init_timer(uint32_t timer)
-{
-    register_interrupt_handler(IRQ0,&timer_handle);
+void init_timer(uint32_t timer) {
+    register_interrupt_handler(IRQ0, &timer_handle);
     uint32_t divisor = 1193180 / timer;
 
     outb(0x43, 0x36); // 频率

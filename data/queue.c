@@ -27,7 +27,7 @@ void queue_push(Queue *pq, char x) {
     if (newnode == NULL) {
         printf("OUT_OF_MEMORY: The kernel memory out of.");
         io_cli();
-        for(;;)io_hlt();
+        for (;;)io_hlt();
     }
     newnode->data = x;   //新节点储存数据
     newnode->next = NULL;//新节点的下一个指向NULL，即新节点作为队尾
@@ -43,7 +43,7 @@ void queue_push(Queue *pq, char x) {
 }
 
 char queue_pop(Queue *pq) {
-    if(pq->size == 0)return NULL;
+    if (pq->size == 0)return NULL;
     QNode *next = pq->phead->next;
     kfree(pq->phead);
     pq->phead = next;
