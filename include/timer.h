@@ -4,5 +4,6 @@
 #include <stdint.h>
 
 void init_timer(uint32_t time);
+void clock_sleep(uint32_t timer);
 
 #endif

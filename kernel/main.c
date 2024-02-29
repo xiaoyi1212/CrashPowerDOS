@@ -23,6 +23,8 @@ static uint32_t get_max_pm_addr(multiboot_t *mboot_ptr){          //qemu默认�
     return max_addr;
 }
 
+int y1;
+
 void kernel_main(void *multiboot_structure, unsigned int magicnumber) {
 
     vga_install();
@@ -48,7 +50,8 @@ void kernel_main(void *multiboot_structure, unsigned int magicnumber) {
     print_cpu_id();
 
     task_t* shell = create_task("CPOS-Shell",setup_shell);
-    //task_run(shell);
+
+    clock_sleep(20);
 
     setup_shell();
 

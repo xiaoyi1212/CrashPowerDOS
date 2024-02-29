@@ -131,9 +131,10 @@ void cmd_mkdir(int argc, char **argv) {
         printf("[Shell-MKDIR]: If there are too few parameters, please specify the directory name");
         return;
     }
-    struct File *dir = create_dir(argv[0]);
+    printf("Create directory: %s\n",argv[1]);
+    struct File *dir = create_dir(argv[1]);
     if (dir == NULL) {
-        printf("[Shell-MKDIR]: Cannot create directory '%s'.", argv[0]);
+        printf("[Shell-MKDIR]: Cannot create directory '%s'.", argv[1]);
         return;
     }
     kfree(dir);

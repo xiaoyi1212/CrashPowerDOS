@@ -13,6 +13,14 @@ static void timer_handle(registers_t *regs) {
     io_sti();
 }
 
+void clock_sleep(uint32_t timer){
+    uint32_t sleep = tick + timer;
+    while(1){
+        printf("");
+        if(tick >= sleep)break;
+    }
+}
+
 void init_timer(uint32_t timer) {
     register_interrupt_handler(IRQ0, &timer_handle);
     uint32_t divisor = 1193180 / timer;

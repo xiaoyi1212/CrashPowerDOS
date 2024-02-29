@@ -2,34 +2,27 @@
 #include "../include/memory.h"
 #include "../include/disk.h"
 
-void read_root_dir_sector1(struct File *root_entries)
-{
-    read_disk(SECTOR_NUM_OF_ROOT_DIR_START, 1, (unsigned int)root_entries);
+void read_root_dir_sector1(struct File *root_entries) {
+    read_disk(SECTOR_NUM_OF_ROOT_DIR_START, 1, (unsigned int) root_entries);
 }
 
-void save_root_dir_sector1(struct File *root_entries)
-{
-    write_disk(SECTOR_NUM_OF_ROOT_DIR_START, 1, (unsigned int)root_entries);
+void save_root_dir_sector1(struct File *root_entries) {
+    write_disk(SECTOR_NUM_OF_ROOT_DIR_START, 1, (unsigned int) root_entries);
 }
 
-void read_one_cluster(unsigned short clustno, unsigned int memory_addrress)
-{
+void read_one_cluster(unsigned short clustno, unsigned int memory_addrress) {
     read_disk(clustno + SECTOR_CLUSTER_BALANCE, 1, memory_addrress);
 }
 
-int read_root_dir(struct File *file_infos)
-{
-    struct File *root_entries = kmalloc(SECTOR_SIZE);
+int read_root_dir(struct File *file_infos) {
+    struct File *root_entries = (struct File *) kmalloc(SECTOR_SIZE);
     read_root_dir_sector1(root_entries);
     int n = 0; // 记录文件数
-    for (int i = 0; i < MAX_FILE_NUM; i++)
-    {
-        if (root_entries[i].name[0] == 0)
-        {
+    for (int i = 0; i < MAX_FILE_NUM; i++) {
+        if (root_entries[i].name[0] == 0) {
             break;
         }
-        if (root_entries[i].name[0] != 0xe5)
-        {
+        if (root_entries[i].name[0] != 0xe5) {
             file_infos[n] = root_entries[i];
             n++;
         }
@@ -38,23 +31,19 @@ int read_root_dir(struct File *file_infos)
     return n;
 }
 
-void get_fat1(unsigned short *fat1)
-{
-    read_disk(SECTOR_NUM_OF_FAT1_START, FAT1_SECTORS, (unsigned int)fat1); // 将FAT1全部读取到内存中。
+void get_fat1(unsigned short *fat1) {
+    read_disk(SECTOR_NUM_OF_FAT1_START, FAT1_SECTORS, (unsigned int) fat1); // 将FAT1全部读取到内存中。
 }
 
-void save_fat1(unsigned short *fat1)
-{
-    write_disk(SECTOR_NUM_OF_FAT1_START, FAT1_SECTORS, (unsigned int)fat1); // 将FAT1全部写回到内存中。
+void save_fat1(unsigned short *fat1) {
+    write_disk(SECTOR_NUM_OF_FAT1_START, FAT1_SECTORS, (unsigned int) fat1); // 将FAT1全部写回到内存中。
 }
 
-void get_file_all_clustnos(unsigned short first_clustno, unsigned short *clustnos)
-{
+void get_file_all_clustnos(unsigned short first_clustno, unsigned short *clustnos) {
     unsigned short *fat1 = kmalloc(FAT1_SECTORS * SECTOR_SIZE);
     get_fat1(fat1);
     *clustnos = first_clustno;
-    while (1)
-    {
+    while (1) {
         unsigned short clustno = *(fat1 + *clustnos);
         clustnos++;
         *clustnos = clustno;
@@ -66,51 +55,39 @@ void get_file_all_clustnos(unsigned short first_clustno, unsigned short *clustno
     kfree(fat1);
 }
 
-void read_file(struct File *file, void *file_addr)
-{
-    if (file->size == 0)
-    {
+void read_file(struct File *file, void *file_addr) {
+    if (file->size == 0) {
         return;
     }
     int cluster_count = (file->size + 511) / 512;
     unsigned short *clustnos = kmalloc(cluster_count * 2);
     get_file_all_clustnos(file->clustno, clustnos);
-    for (int i = 0; i < cluster_count; i++)
-    {
-        read_one_cluster(clustnos[i], (unsigned int)file_addr);
+    for (int i = 0; i < cluster_count; i++) {
+        read_one_cluster(clustnos[i], (unsigned int) file_addr);
         file_addr += 512;
     }
     kfree(clustnos);
 }
 
-void check_name_or_ext(char *str, int len)
-{
-    for (int i = 0; i < len; i++)
-    {
-        if (str[i] == 0)
-        {
+void check_name_or_ext(char *str, int len) {
+    for (int i = 0; i < len; i++) {
+        if (str[i] == 0) {
             str[i] = ' ';
-        }
-        else if ('a' <= str[i] && str[i] <= 'z')
-        {
+        } else if ('a' <= str[i] && str[i] <= 'z') {
             str[i] -= 0x20;
         }
     }
 }
 
-void check_name_and_ext(char *name, char *ext)
-{
+void check_name_and_ext(char *name, char *ext) {
     check_name_or_ext(name, 8);
     check_name_or_ext(ext, 3);
 }
 
-void analyse_fullname(char *fullname, char *name, char *ext)
-{
+void analyse_fullname(char *fullname, char *name, char *ext) {
     int ext_dot_index = -1;
-    for (int i = 11; i >= 0; i--)
-    {
-        if (fullname[i] == '.')
-        {
+    for (int i = 11; i >= 0; i--) {
+        if (fullname[i] == '.') {
             ext_dot_index = i;
         }
     }
@@ -118,31 +95,24 @@ void analyse_fullname(char *fullname, char *name, char *ext)
     {
         memcpy(name, fullname, 8);
         memset(ext, ' ', 3);
-    }
-    else if (ext_dot_index == 0) // 没有文件名的情况
+    } else if (ext_dot_index == 0) // 没有文件名的情况
     {
         memset(name, ' ', 8);
         memcpy(ext, fullname + 1, 3);
-    }
-    else
-    {
+    } else {
         memcpy(name, fullname, ext_dot_index);
         memcpy(ext, fullname + ext_dot_index + 1, 3);
     }
     check_name_and_ext(name, ext);
 }
 
-int find_file(char *name, char *ext, struct File *const file)
-{
+int find_file(char *name, char *ext, struct File *const file) {
     struct File *root_entries = kmalloc(SECTOR_SIZE);
     read_root_dir_sector1(root_entries);
     int isfind = 0;
-    for (int i = 0; i < MAX_FILE_NUM; i++)
-    {
-        if (memcmp(root_entries[i].name, name, 8) == 0 && memcmp(root_entries[i].ext, ext, 3) == 0)
-        {
-            if (file != 0)
-            {
+    for (int i = 0; i < MAX_FILE_NUM; i++) {
+        if (memcmp(root_entries[i].name, name, 8) == 0 && memcmp(root_entries[i].ext, ext, 3) == 0) {
+            if (file != 0) {
                 *file = root_entries[i];
             }
             isfind = 1;
@@ -152,7 +122,7 @@ int find_file(char *name, char *ext, struct File *const file)
     return isfind;
 }
 
-struct File *create_dir(char *fullname){
+struct File *create_dir(char *fullname) {
     char name[8] = {0};
     char ext[3] = {0};
     analyse_fullname(fullname, name, ext);

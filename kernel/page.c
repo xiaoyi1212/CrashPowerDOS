@@ -12,24 +12,24 @@ extern uint32_t placement_address;
 extern void *program_break, *program_break_end;
 
 static void set_frame(uint32_t frame_addr) {
-    uint32_t frame = frame_addr / 0x1000; // 页中frame地址右移了12位，此处也一样
-    uint32_t idx = INDEX_FROM_BIT(frame); // 找到对应位置
+    uint32_t frame = frame_addr / 0x1000;
+    uint32_t idx = INDEX_FROM_BIT(frame);
     uint32_t off = OFFSET_FROM_BIT(frame);
-    frames[idx] |= (0x1 << off); // off位置1
+    frames[idx] |= (0x1 << off);
 }
 
 static void clear_frame(uint32_t frame_addr) {
-    uint32_t frame = frame_addr / 0x1000; // 页中frame地址右移了12位，此处也一样
-    uint32_t idx = INDEX_FROM_BIT(frame); // 找到对应位置
+    uint32_t frame = frame_addr / 0x1000;
+    uint32_t idx = INDEX_FROM_BIT(frame);
     uint32_t off = OFFSET_FROM_BIT(frame);
-    frames[idx] &= ~(0x1 << off); // off位置0
+    frames[idx] &= ~(0x1 << off);
 }
 
 static uint32_t test_frame(uint32_t frame_addr) {
-    uint32_t frame = frame_addr / 0x1000; // 页中frame地址右移了12位，此处也一样
-    uint32_t idx = INDEX_FROM_BIT(frame); // 找到对应位置
+    uint32_t frame = frame_addr / 0x1000;
+    uint32_t idx = INDEX_FROM_BIT(frame);
     uint32_t off = OFFSET_FROM_BIT(frame);
-    return (frames[idx] & (0x1 << off)); // 只取出off位对应的值
+    return (frames[idx] & (0x1 << off));
 }
 
 uint32_t first_frame() {
@@ -124,7 +124,6 @@ page_t *get_page(uint32_t address, int make, page_directory_t *dir) {
 }
 
 void page_fault(registers_t *regs) {
-    // 现在一个#PE错误出现，根据标准，错误地址在cr2寄存器中。
     asm("cli");
     uint32_t faulting_address;
     asm volatile("mov %%cr2, %0" : "=r" (faulting_address)); //
