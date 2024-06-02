@@ -93,4 +93,8 @@ void alloc_frame_line(page_t *page, unsigned line,int is_kernel, int is_writable
 
 void free_frame(page_t *page);
 
+void paging_load_directory(uint32_t *directory);
+
+uint32_t page_clone_malloc(uint32_t size,uint32_t *phys);
+
 #endif //CRASHPOWEROS_MEMORY_H

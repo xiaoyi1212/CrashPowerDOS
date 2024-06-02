@@ -67,8 +67,9 @@ void alloc_frame(page_t *page, int is_kernel, int is_writable) {
         page->frame = idx;
     }
 }
-void alloc_frame_line(page_t *page, unsigned line,int is_kernel, int is_writable) {
-   // logk("%08x\n",line);
+
+void alloc_frame_line(page_t *page, unsigned line, int is_kernel, int is_writable) {
+    // logk("%08x\n",line);
     set_frame(line);
     page->present = 1; // 现在这个页存在了
     page->rw = is_writable ? 1 : 0; // 是否可写由is_writable决定
@@ -166,7 +167,7 @@ static page_table_t *clone_table(page_table_t *src, uint32_t *physAddr) {
 
 page_directory_t *clone_directory(page_directory_t *src) {
     uint32_t phys;
-    page_directory_t *dir = (page_directory_t *) kmalloc_ap(sizeof(page_directory_t), &phys);
+    page_directory_t *dir = (page_directory_t *) page_clone_malloc(sizeof(page_directory_t), &phys);
     memset(dir, 0, sizeof(page_directory_t));
 
     uint32_t offset = (uint32_t) dir->tablesPhysical - (uint32_t) dir;
@@ -197,19 +198,21 @@ void init_page(multiboot_t *mboot) {
     kernel_directory = (page_directory_t *) kmalloc_a(sizeof(page_directory_t)); //kmalloc: 无分页情况自动在内核后方分配 | 有分页从内核堆分配
 
     memset(kernel_directory, 0, sizeof(page_directory_t));
+    //kernel_directory->physicalAddr = (uint32_t)kernel_directory->tablesPhysical;
     current_directory = kernel_directory;
     int i = 0;
 
-    while (i < placement_address) {
+    while (i < placement_address + 0x30000) {
         // 内核部分对ring3而言可读不可写 | 无偏移页表映射
         alloc_frame(get_page(i, 1, kernel_directory), 0, 0);
         i += 0x1000;
     }
 
-    unsigned int j = mboot->framebuffer_addr,size = mboot->framebuffer_height * mboot->framebuffer_width*mboot->framebuffer_bpp;
+    unsigned int j = mboot->framebuffer_addr, size =
+            mboot->framebuffer_height * mboot->framebuffer_width * mboot->framebuffer_bpp;
 
-    while (j <= mboot->framebuffer_addr + size){
-        alloc_frame_line(get_page(j,1,kernel_directory),j,0,0);
+    while (j <= mboot->framebuffer_addr + size) {
+        alloc_frame_line(get_page(j, 1, kernel_directory), j, 0, 0);
         j += 0x1000;
     }
 
@@ -219,8 +222,10 @@ void init_page(multiboot_t *mboot) {
     }
 
     register_interrupt_handler(14, page_fault);
-    switch_page_directory(kernel_directory);
+    current_directory = clone_directory(kernel_directory);
+    switch_page_directory(current_directory);
 
     program_break = (void *) KHEAP_START;
     program_break_end = (void *) (KHEAP_START + KHEAP_INITIAL_SIZE);
 }
+

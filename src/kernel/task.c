@@ -2,6 +2,7 @@
 #include "../include/common.h"
 #include "../include/graphics.h"
 #include "../include/io.h"
+#include "../include/description_table.h"
 
 struct task_struct *running_proc_head = NULL;
 struct task_struct *wait_proc_head = NULL;
@@ -152,14 +153,59 @@ void schedule() {
     }
 }
 
+extern page_directory_t *current_directory;
+
 void change_task_to(struct task_struct *next) {
     if (current != next) {
         struct task_struct *prev = current;
         current = next;
 
-        switch_page_directory(current->pgd_dir);
+        current_directory = current->pgd_dir;
+        logk("TASK I\n");
+        logkf("PAGE ADDR: %08x | KERNL PAGE ADDR: %08x\n",current->pgd_dir,kernel_directory);
+        paging_load_directory((uint32_t)current->pgd_dir);
+        logk("TASK II\n");
+        set_kernel_stack(current->stack);
         switch_to(&(prev->context), &(current->context));
     }
+}
+
+int32_t user_task(int (*fn)(void *), void *arg,char* name){
+    struct task_struct *new_task = (struct task_struct *) kmalloc(STACK_SIZE);
+    assert(new_task != NULL, "kern_thread: kmalloc error");
+
+    // 将栈低端结构信息初始化为 0
+    memset(new_task,0, sizeof(struct task_struct));
+
+    new_task->state = TASK_RUNNABLE;
+    new_task->stack = current;
+    new_task->pid = now_pid++;
+    new_task->pgd_dir = clone_directory(kernel_directory);
+
+    new_task->name = name;
+
+    uint32_t *stack_top = (uint32_t * )((uint32_t) new_task + STACK_SIZE);
+
+    *(--stack_top) = (uint32_t) arg;
+    *(--stack_top) = (uint32_t) kthread_exit;
+    *(--stack_top) = (uint32_t) fn;
+
+    new_task->context.esp = (uint32_t) new_task + STACK_SIZE - sizeof(uint32_t) * 3;
+
+    // 设置新任务的标志寄存器未屏蔽中断，很重要
+    new_task->context.eflags = 0x200;
+    new_task->next = running_proc_head;
+
+    // 找到当前进任务队列，插入到末尾
+    struct task_struct *tail = running_proc_head;
+    assert(tail != NULL, "Must init sched!");
+
+    while (tail->next != running_proc_head) {
+        tail = tail->next;
+    }
+    tail->next = new_task;
+
+    return new_task->pid;
 }
 
 int32_t kernel_thread(int (*fn)(void *), void *arg,char* name) {

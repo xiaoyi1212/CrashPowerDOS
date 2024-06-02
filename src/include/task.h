@@ -58,6 +58,8 @@ void wait_task(struct task_struct *task);
 
 void start_task(struct  task_struct *task);
 
+int32_t user_task(int (*fn)(void *), void *arg,char* name);
+
 int get_procs();
 
 #endif //CRASHPOWEROS_TASK_H

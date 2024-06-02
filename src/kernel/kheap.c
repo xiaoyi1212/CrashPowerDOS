@@ -40,6 +40,17 @@ static uint32_t kmalloc_int(uint32_t sz, uint32_t align, uint32_t *phys) {
     return tmp;
 }
 
+uint32_t page_clone_malloc(uint32_t size,uint32_t *phys){
+    if ((placement_address & 0x00000FFF)) {
+        placement_address &= 0xFFFFF000;
+        placement_address += 0x1000;
+    }
+    if (phys) *phys = placement_address;
+    uint32_t tmp = placement_address;
+    placement_address += size;
+    return tmp;
+}
+
 uint32_t kmalloc_a(uint32_t size) {
     return kmalloc_int(size, 1, 0);
 }

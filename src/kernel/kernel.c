@@ -44,6 +44,10 @@ uint32_t memory_all(){
     return 0;
 }
 
+int user_debug(){
+    return 0;
+}
+
 int check_task(int *pid){
     struct task_struct *shell = found_task_pid(*pid);
     while (1){
@@ -121,8 +125,9 @@ void kernel_main(multiboot_t *multiboot) {
 
     clock_sleep(25);
 
-    int pid = kernel_thread(setup_shell, NULL, "CPOS-Shell");
-    kernel_thread(check_task,&pid,"CPOS-SHELL-CHECK");
+    user_task(user_debug,NULL,"UserAPP");
+    //int pid = kernel_thread(setup_shell, NULL, "CPOS-Shell");
+    //kernel_thread(check_task,&pid,"CPOS-SHELL-CHECK");
 
     for (;;) {
         io_hlt();
